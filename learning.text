@@ -1,0 +1,549 @@
+GET /_cluster/health
+GET /_cat/nodes?v
+GET /_nodes/process
+GET /_nodes/_all/process
+
+
+Get /_cat/indices?v
+GET /_cat/indices?v&expand_wildcards=all
+GET /_cat/shards?v
+
+
+DELETE /pages
+PUT /pages
+{
+  "settings": {
+    "number_of_shards": 2, 
+    "number_of_replicas": 2
+  }
+}
+PUT /pages/_doc/123
+{
+  "name": "varaprasad123",
+  "price": 101
+}
+
+GET /pages/_doc/123
+
+POST /pages/_update/123
+{
+  "doc":{
+    "in_stock": 3
+  }
+}
+
+POST /pages/_update/123
+{
+  "doc":{
+    "tags": ["electronics"]
+  }
+}
+
+POST /pages/_update/123
+{
+  "script": {
+    "source": "ctx._source.in_stock--"
+  }
+}
+
+
+POST /pages/_update/123
+{
+  "script": {
+    "source": "ctx._source.in_stock=10"
+  }
+}
+
+POST /pages/_update/123
+{
+  "script": {
+    "source": "ctx._source.in_stock -= params.quantity",
+    "params": {
+      "quantity" : 4
+    }
+  }
+}
+
+GET /pages/_doc/123
+
+
+POST /pages/_update/123
+{
+  "script": {
+    "source": """
+      if(ctx._source.in_stock == 0){
+        ctx.op = "noop";
+      }
+      ctx._source.in_stock--;
+      """
+  }
+}
+
+POST /pages/_update/123
+{
+  "script": {
+    "source": """
+      if(ctx._source.in_stock == 0){
+        ctx.op = "delete";
+      }
+      ctx._source.in_stock--;
+      """
+  }
+}
+
+
+POST /pages/_update/132
+{
+  "script": {
+    "source": "ctx._source.in_stock++"
+  },
+  "upsert": {
+    "name": "jvvprasad1",
+    "in_stock": 0
+  }
+}
+
+GET /pages/_doc/132
+
+POST /pages/_update_by_query
+{
+  "script": {
+    "source": """
+    if(ctx._source.in_stock != null){
+      ctx._source.in_stock++
+    }
+    """
+  }
+}
+
+
+POST /pages/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+POST /pages/_update_by_query
+{
+  "conflicts": "proceed", 
+  "script": {
+    "source": "ctx._source.in_stock++"
+  },
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+POST /_bulk
+{ "index": {"_index": "pages", "_id": 200}}
+{ "name" : "bulk1", "in_stock": 3}
+{ "create" : {"_index": "pages", "_id": 201}}
+{"name" : "bulk2", "in_stock": 4}
+
+POST /_bulk
+{ "update": {"_index": "pages", "_id": 201}}
+{ "doc": {"name" : "bulk4"}}
+{ "delete" : {"_index": "pages", "_id": 200}}
+
+POST /pages/_bulk
+{ "update": {"_id": 201}}
+{ "doc": {"name" : "bulk4"}}
+{ "delete" : {"_id": 200}}
+
+
+
+POST /_analyze
+{
+  "text": "2 guys walks in the stree DUCKS",
+  "analyzer": "standard"
+}
+
+POST /_analyze
+{
+  "text": "2 guys walks in the street DUCKS",
+  "char_filter": [],
+  "tokenizer": "standard",
+  "filter": ["lowercase"]
+}
+
+
+GET /pages/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+PUT /reviews
+{ 
+    "mappings":{
+      "properties": {
+        "name": {"type": "text"},
+        "email": {"type": "keyword"},
+        "author":{
+          "properties": {
+            "name": {"type": "text"}
+          }
+        }
+      }
+    }
+}
+
+PUT /reviews/_mapping
+{ 
+  "properties":{
+    "created_at": {"type": "date"}
+  }
+}
+
+PUT /reviews_dot
+{ 
+    "mappings":{
+      "properties": {
+        "name": {"type": "text"},
+        "email": {"type": "keyword"},
+        "author.name": {"type": "text"}
+      }
+    }
+}
+
+GET /reviews/_search
+{
+  "query":{
+    "match_all": {}
+  }
+}
+
+GET /reviews/_mapping
+
+DELETE /reviews_temp
+
+PUT /reviews_temp
+{
+    "mappings": {
+      "properties": {
+        "author": {
+          "properties": {
+            "name": {
+              "type": "text"
+            }
+          }
+        },
+        "created_at": {
+          "type": "date"
+        },
+        "email": {
+          "type": "text"
+        },
+        "name": {
+          "type": "text"
+        }
+      }
+  }
+}
+GET /reviews_temp/_mapping
+GET /reviews_dot/_mapping
+
+
+POST /_reindex
+{
+  "source": {
+    "index": "reviews",
+    "query": {
+      "match_all": {}
+    },
+    "_source": ["name"]
+  },
+  "dest": {
+    "index": "reviews_temp"
+  },
+  "script": {
+    "source": """
+      if(ctx._source.email != null){
+        ctx._source.email = ctx._source.email.toString()
+      }
+    """
+  }
+}
+
+GET /reviews/_mapping/field/email
+GET /reviews/_mapping/field/author.name
+
+GET /_cat/indices
+GET /users/_search
+{
+  "query": {
+    "term": {
+      "email.keyword": {
+        "value": "n150231@gmail.com"
+      }
+    }
+  }
+}
+
+DELETE reviews
+
+
+
+PUT /multi_fields_test
+{
+    "mappings": {
+      "properties": {
+        "email": {
+          "type": "text",
+          "fields": {
+            "keyword":{
+              "type": "keyword"
+            }
+          }
+        }
+      }
+  }
+}
+
+
+GET /lobbies/_search/
+{"from":0,"size":10,"query":{"bool":{"adjust_pure_negative":true,"boost":1.0}},"sort":[{"createdDate":{"order":"desc"}}]}
+
+POST /lobbies/_delete_by_query
+{
+  "query": {
+    "term": {
+      "userId.keyword": {
+        "value": "659708ddbb99d01da3ca0a6f"
+      }
+    }
+  }
+}
+
+PUT /lobbies/_settings
+{
+  "index" : {
+    "refresh_interval" : "1ms"  // Set a lower refresh interval
+  }
+}
+
+
+
+POST /lobbies/_doc
+{
+  "lobbyId": "12345",
+  "userId": "54321",
+  "lobbyStatus": "ACTIVE",
+  "description": "This is a lobby description.",
+  "title": "Lobby Title",
+  "dateInfo": "2024-12-02T16:15:43.277+00:00",
+  "location": {
+    "lat": 28.6109026,
+    "lon": 77.1149472
+  }
+}
+
+
+DELETE /lobbies
+
+POST lobbies/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.filter.remove('dateRange')"
+  },
+  "query": {
+    "exists": {
+      "field": "filter.dateRange"
+    }
+  }
+}
+
+
+DELETE /lobbies/_doc/cIv6hpMBb14ZibTVznN9
+
+GET /users/_search
+{
+  "query": {
+      "term": 
+        {
+          "userId": "659708ddbb99d01da3ca0a6f"
+        }
+    }
+  }
+}
+
+GET /houses/_search
+{
+  
+}
+
+GET /lobbies/_doc/67266018a5112705654eccc9
+
+GET /users_v2/_mapping
+
+POST /users/_update/kotL75EBb14ZibTVP3Ll-
+{
+  "script": {
+    "source": """
+      String dobStr = ctx._source.dob;
+      try {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern('d/M/yyyy');
+        LocalDate date = LocalDate.parse(dobStr, formatter);
+        ctx._source.dob = date.toString(); // Converts to yyyy-MM-dd
+      } catch (DateTimeParseException e) {
+        // Log or handle the exception as needed
+        ctx._source.dob = 'Invalid date format'; // Or handle as needed
+      }
+    """,
+    "lang": "painless"
+  }
+}
+
+
+
+POST /users/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.remove('dob')",
+    "lang": "painless"
+  },
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+
+POST /_reindex
+{
+  "source": {
+    "index": "users"
+  },
+  "dest": {
+    "index": "users_v2"
+  },
+  "script": {
+    "source": "if (ctx._source.dob != null) { ctx._source.dob = ctx._source.dob; }"
+  }
+}
+
+DELETE /users
+
+POST /_aliases
+{
+  "actions": [
+    {
+      "remove": {
+        "index": "users_v2",
+        "alias": "users"
+      }
+    },
+    {
+      "add": {
+        "index": "users_v2",
+        "alias": "users"
+      }
+    }
+  ]
+}
+
+GET /_in
+
+DELETE /users
+
+PUT /users_v1
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "custom_text_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "stop", "porter_stem"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "userId": { "type": "keyword" },
+      "email": { "type": "keyword" },
+      "name": { "type": "text", "analyzer": "custom_text_analyzer" },
+      "active": { "type": "boolean" },
+      "userName": { "type": "text", "analyzer": "custom_text_analyzer" },
+      "profilePictureUrls": { "type": "keyword", "index": false },
+      "dob": { "type": "date", "format": "yyyy-MM-dd" },
+      "issuer": { "type": "keyword" },
+      "uuid": { "type": "keyword" },
+      "address": {
+        "properties": {
+          "line1": { "type": "text", "analyzer": "custom_text_analyzer" },
+          "line2": { "type": "text", "analyzer": "custom_text_analyzer" },
+          "city": { "type": "keyword" },
+          "state": { "type": "keyword" },
+          "country": { "type": "keyword" },
+          "postalCode": { "type": "keyword" }
+        }
+      },
+      "profileInterests": {
+        "type": "nested",
+        "properties": {
+          "category": {
+            "properties": {
+              "categoryId": { "type": "keyword" },
+              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
+              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+            }
+          },
+          "subCategories": {
+            "type": "nested",
+            "properties": {
+              "subCategoryId": { "type": "keyword" },
+              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
+              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+            }
+          }
+        }
+      },
+      "prompts": {
+        "type": "nested",
+        "properties": {
+          "subCategoryId": { "type": "keyword" },
+          "prompt": { "type": "text", "analyzer": "custom_text_analyzer" },
+          "answer": { "type": "text", "analyzer": "custom_text_analyzer" }
+        }
+      },
+      "verificationStep": { "type": "keyword" },
+      "socialMediaLinks": { "type": "keyword", "index": false },
+      "profileVideoUrl": { "type": "keyword", "index": false },
+      "lobbyInterests": {
+        "type": "nested",
+        "properties": {
+          "category": {
+            "properties": {
+              "categoryId": { "type": "keyword" },
+              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
+              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+            }
+          },
+          "subCategories": {
+            "type": "nested",
+            "properties": {
+              "subCategoryId": { "type": "keyword" },
+              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
+              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
