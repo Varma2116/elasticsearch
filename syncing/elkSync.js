@@ -12,7 +12,7 @@ const elkClient = new Client({
 // MongoDB Connection URI
 const mongoUri = "mongodb+srv://jvvprasad04:2NpRd7Lph4NGhd6P@aroundu-cluster1.2vqpnxe.mongodb.net/userdb?retryWrites=true&w=majority"; // Update with your database name
 
-// Function to Sync Users to Elasticsearch
+
 async function syncUsersToElk() {
     try {
         // Connect to MongoDB
@@ -22,25 +22,50 @@ async function syncUsersToElk() {
         });
         console.log("Connected to MongoDB for Users");
 
-        // Fetch all users
-        const users = await User.find({});
-        console.log(`Fetched ${users.length} users from MongoDB`);
+        // Pagination parameters
+        const batchSize = 100; // Number of users to process in each batch
+        let skip = 0;
+        let hasMoreUsers = true;
 
-        // Sync each user to Elasticsearch
-        for (const user of users) {
-            const userDocument = {
-                ...user.toObject(),
-                userId: user._id, // Map MongoDB `_id` to Elasticsearch `userId`
-            };
-            delete userDocument._id;
+        while (hasMoreUsers) {
+            // Fetch users in batches
+            const users = await User.find({}).skip(skip).limit(batchSize);
+            console.log(`Fetched ${users.length} users from MongoDB`);
 
-            // Index user in Elasticsearch
-            const response = await elkClient.index({
-                index: "users", // Update to your desired Elasticsearch index
-                document: userDocument,
+            if (users.length === 0) {
+                hasMoreUsers = false;
+                break;
+            }
+
+            // Sync users concurrently
+            const userSyncPromises = users.map(async (user) => {
+                const userDocument = {
+                    ...user.toObject()
+                }
+                let userId = userDocument._id.toString();
+                console.log(userDocument.userInterests);
+                delete userDocument._id; // Remove MongoDB `_id` field
+                delete userDocument.userId;
+                if(userDocument.location){
+                    delete userDocument.location._id;
+                }
+                try {
+                    const response = await elkClient.index({
+                        index: "users_v1", // Elasticsearch index name
+                        id: userId, // Use userId as the _id
+                        document: userDocument,
+                    });
+                    console.log(`Indexed user: ${userId}`, response.result);
+                } catch (err) {
+                    console.error(`Failed to index user: ${userDocument.userId}`, err.message);
+                }
             });
 
-            console.log(`Indexed user: ${userDocument.userId}`, response.result);
+            // Wait for all promises to resolve for the batch
+            await Promise.all(userSyncPromises);
+
+            // Move to the next batch
+            skip += batchSize;
         }
 
         console.log("All users synced to Elasticsearch");
@@ -49,6 +74,7 @@ async function syncUsersToElk() {
     } finally {
         // Close MongoDB connection
         mongoose.connection.close();
+        console.log("MongoDB connection closed");
     }
 }
 

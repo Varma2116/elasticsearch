@@ -1,4 +1,4 @@
-PUT /users
+curl -XPUT "http://localhost:9200/users_v1" -H "kbn-xsrf: reporting" -H "Content-Type: application/json" -d'
 {
   "settings": {
     "analysis": {
@@ -6,49 +6,131 @@ PUT /users
         "custom_text_analyzer": {
           "type": "custom",
           "tokenizer": "standard",
-          "filter": ["lowercase", "stop", "porter_stem"]
+          "filter": [
+            "lowercase",
+            "stop",
+            "porter_stem"
+          ]
         }
       }
     }
   },
   "mappings": {
     "properties": {
-      "id": { "type": "keyword" },
-      "userId": { "type": "keyword" },
-      "email": { "type": "keyword" },
-      "name": { "type": "text", "analyzer": "custom_text_analyzer" },
-      "active": { "type": "boolean" },
-      "userName": { "type": "text", "analyzer": "custom_text_analyzer" },
-      "profilePictureUrls": { "type": "keyword", "index": false },
-      "dob": { "type": "date", "format": "yyyy-MM-dd" },
-      "issuer": { "type": "keyword" },
-      "uuid": { "type": "keyword" },
+      "id": {
+        "type": "keyword"
+      },
+      "email": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "keyword"
+      },
+      "active": {
+        "type": "boolean"
+      },
+      "userName": {
+        "type": "text",
+        "analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "profilePictureUrls": {
+        "type": "keyword",
+        "index": false
+      },
+      "dob": {
+        "type": "date"
+      },
+      "issuer": {
+        "type": "keyword"
+      },
+      "uuid": {
+        "type": "keyword"
+      },
+      "password": {
+        "type": "keyword",
+        "store": false,
+        "index": false
+      },
       "address": {
         "properties": {
-          "line1": { "type": "text", "analyzer": "custom_text_analyzer" },
-          "line2": { "type": "text", "analyzer": "custom_text_analyzer" },
-          "city": { "type": "keyword" },
-          "state": { "type": "keyword" },
-          "country": { "type": "keyword" },
-          "postalCode": { "type": "keyword" }
+          "line1": {
+            "type": "text"
+          },
+          "line2": {
+            "type": "text"
+          },
+          "city": {
+            "type": "keyword"
+          },
+          "state": {
+            "type": "keyword"
+          },
+          "country": {
+            "type": "keyword"
+          },
+          "postalCode": {
+            "type": "keyword"
+          }
         }
+      },
+      "gender": {
+        "type": "keyword"
+      },
+      "stage": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "currentOnboardingStep": {
+        "type": "integer"
+      },
+      "onboardingSteps": {
+        "type": "integer"
+      },
+      "badges": {
+        "type": "keyword"
+      },
+      "location": {
+        "type": "geo_point"
       },
       "profileInterests": {
         "type": "nested",
         "properties": {
           "category": {
             "properties": {
-              "categoryId": { "type": "keyword" },
-              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
-              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+              "categoryId": {
+                "type": "keyword"
+              },
+              "name": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              },
+              "description": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              }
             }
           },
           "subCategories": {
             "type": "nested",
             "properties": {
-              "subCategoryId": { "type": "keyword" },
-              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
-              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+              "subCategoryId": {
+                "type": "keyword"
+              },
+              "name": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              },
+              "description": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              }
             }
           }
         }
@@ -56,34 +138,122 @@ PUT /users
       "prompts": {
         "type": "nested",
         "properties": {
-          "subCategoryId": { "type": "keyword" },
-          "prompt": { "type": "text", "analyzer": "custom_text_analyzer" },
-          "answer": { "type": "text", "analyzer": "custom_text_analyzer" }
+          "subCategoryId": {
+            "type": "keyword"
+          },
+          "prompt": {
+            "type": "text",
+            "analyzer": "custom_text_analyzer"
+          },
+          "answer": {
+            "type": "text",
+            "analyzer": "custom_text_analyzer"
+          }
         }
       },
-      "verificationStep": { "type": "keyword" },
-      "socialMediaLinks": { "type": "keyword", "index": false },
-      "profileVideoUrl": { "type": "keyword", "index": false },
+      "verificationStep": {
+        "type": "keyword"
+      },
+      "socialMediaLinks": {
+        "type": "keyword",
+        "index": false
+      },
+      "profileVideoUrl": {
+        "type": "keyword",
+        "index": false
+      },
       "lobbyInterests": {
         "type": "nested",
         "properties": {
           "category": {
             "properties": {
-              "categoryId": { "type": "keyword" },
-              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
-              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+              "categoryId": {
+                "type": "keyword"
+              },
+              "name": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              },
+              "description": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              }
             }
           },
           "subCategories": {
             "type": "nested",
             "properties": {
-              "subCategoryId": { "type": "keyword" },
-              "name": { "type": "text", "analyzer": "custom_text_analyzer" },
-              "description": { "type": "text", "analyzer": "custom_text_analyzer" }
+              "subCategoryId": {
+                "type": "keyword"
+              },
+              "name": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              },
+              "description": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer"
+              }
             }
           }
         }
       }
     }
   }
+}'
+
+
+
+
+
+
+GET /users_v1/_search
+{
+  "query":{
+    "match": {"_id": "6733242499c5da7c7bbcad69"}
+  }
+}
+
+POST /users_v1/_update/6733242499c5da7c7bbcad69
+{
+  "doc":{
+  "userName": "a"
+  }
+}
+
+GET /users_v1/_search
+{
+  "_source": {
+    "includes": ["userName", "name", "profilePictureUrls", "userInterests", "gender", "dob", "profileInterests", "stage", "status"]
+  },
+  "query": {
+    "bool": {
+      "must": {
+        "wildcard": {
+          "userName.keyword": {
+            "value": "*a*"
+          }
+        }
+      },
+      "should": [
+        {
+          "term": {
+            "userName.keyword": {
+              "value": "a",
+              "boost": 2.0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "_score": {
+        "order": "desc"
+      }
+    }
+  ],
+  "from": 0,
+  "size": 10,
 }
